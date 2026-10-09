@@ -2,15 +2,11 @@ package no.entur.anzu
 
 import org.junit.jupiter.api.Test
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.context.annotation.Import
 
-/** The bean graph is sound without Postgres or Pub/Sub. */
-@SpringBootTest(
-    properties = [
-        "spring.flyway.enabled=false",
-        "spring.cloud.gcp.pubsub.enabled=false",
-        "spring.autoconfigure.exclude=org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration",
-    ]
-)
+/** The whole bean graph starts, and Flyway applies the schema. */
+@SpringBootTest
+@Import(PostgresTestBase::class)
 class AppTest {
 
     @Test

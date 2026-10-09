@@ -29,7 +29,7 @@
         <entur-helpers.version>7.4.0</entur-helpers.version>
         <kotlinx-coroutines.version>1.9.0</kotlinx-coroutines.version>
         <mockito-kotlin.version>5.4.0</mockito-kotlin.version>
-        <testcontainers.version>1.20.4</testcontainers.version>
+        <testcontainers.version>1.21.3</testcontainers.version>
         <jackson3.version>3.1.4</jackson3.version>
     </properties>
 
@@ -97,9 +97,10 @@
             <version>${kotlinx-coroutines.version}</version>
         </dependency>
 
+        <!-- Spring Boot 4 splits auto-configuration per module; flyway-core alone brings none. -->
         <dependency>
-            <groupId>org.flywaydb</groupId>
-            <artifactId>flyway-core</artifactId>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-flyway</artifactId>
         </dependency>
         <dependency>
             <groupId>org.flywaydb</groupId>
@@ -203,6 +204,19 @@
                         <version>${kotlin.version}</version>
                     </dependency>
                 </dependencies>
+            </plugin>
+            <!--
+              docker-java defaults to Docker API v1.32 and daemons reject anything below 1.40, which
+              surfaces as "Could not find a valid Docker environment" from Testcontainers.
+            -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <systemPropertyVariables>
+                        <api.version>1.44</api.version>
+                    </systemPropertyVariables>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
