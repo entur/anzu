@@ -1,0 +1,307 @@
+openapi: 3.0.3
+info:
+  title: NeTEx validation reports
+  description: |
+    Validation reports produced during the import of a NeTEx dataset.
+
+    An import runs several validation steps, each producing its own report, so the unit of
+    access is the whole import rather than a single validation run. The codespace is resolved
+    from the correlation id; callers never supply it.
+
+    Responses are large and highly compressible. Send `Accept-Encoding: gzip`.
+  version: 1.0.0
+  contact:
+    name: Entur
+    url: https://www.entur.org
+  x-entur-metadata:
+    id: validation-reports
+    owner: team-ror
+    audience: partner
+  x-stability-level: draft
+  x-deprecated: false
+  x-sunset: ""
+
+servers:
+  - url: https://api.dev.entur.io/timetable/v1
+    description: Development
+  - url: https://api.staging.entur.io/timetable/v1
+    description: Staging
+  - url: https://api.entur.io/timetable/v1
+    description: Production
+
+security:
+  - jwt: []
+
+tags:
+  - name: validation-reports
+    description: NeTEx validation reports produced during the import of a dataset
+
+paths:
+  /validation-reports/{correlationId}:
+    get:
+      operationId: getValidationReports
+      summary: Every validation run performed during one import
+      description: |
+        Requires the `editRouteData` responsibility for the codespace the import was delivered to.
+        The codespace is resolved from the correlation id, so it cannot be chosen by the caller.
+      tags: [validation-reports]
+      x-entur-permissions:
+        description: >-
+          The caller must be able to edit route data for the codespace the import was delivered
+          to. The codespace is resolved from the correlation id, never supplied by the caller.
+        value: editRouteData
+      parameters:
+        - $ref: '#/components/parameters/CorrelationId'
+        - $ref: '#/components/parameters/ClientName'
+      responses:
+        '200':
+          description: Every run recorded for this import
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationReports'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+        '502': { $ref: '#/components/responses/BadGateway' }
+
+  /validation-reports/{correlationId}/{stage}:
+    get:
+      operationId: getValidationReportForStage
+      summary: One validation run from an import
+      description: |
+        Requires the `editRouteData` responsibility for the codespace the import was delivered to.
+        Authorization is applied before the stage is resolved, so an unauthorized caller receives
+        403 for every stage segment regardless of which stages actually ran.
+      tags: [validation-reports]
+      x-entur-permissions:
+        description: >-
+          The caller must be able to edit route data for the codespace the import was delivered
+          to. Authorization is applied before the stage is resolved.
+        value: editRouteData
+      parameters:
+        - $ref: '#/components/parameters/CorrelationId'
+        - name: stage
+          in: path
+          required: true
+          description: The validation step, in kebab-case.
+          schema:
+            type: string
+            example: prevalidation
+          examples:
+            prevalidation: { value: prevalidation }
+            postvalidation: { value: postvalidation }
+            blocksPostvalidation: { value: blocks-postvalidation }
+            flexPostvalidation: { value: flex-postvalidation }
+            mergedPostvalidation: { value: merged-postvalidation }
+        - $ref: '#/components/parameters/ClientName'
+      responses:
+        '200':
+          description: The run. A run still in progress has no entries.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationRunDetail'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '410': { $ref: '#/components/responses/Gone' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+        '502': { $ref: '#/components/responses/BadGateway' }
+
+components:
+  securitySchemes:
+    jwt:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    CorrelationId:
+      name: correlationId
+      in: path
+      required: true
+      description: The correlation id returned when the dataset was uploaded.
+      schema:
+        type: string
+        example: 9f3c1e7a-4b2d-4c8e-9f10-3a5b6c7d8e9f
+    ClientName:
+      name: ET-Client-Name
+      in: header
+      required: true
+      description: '`<company>-<application>`'
+      schema:
+        type: string
+        example: acme-timetable-uploader
+
+  responses:
+    Unauthorized:
+      description: No or invalid access token.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetail' }
+    BadRequest:
+      description: A required header is missing.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetail' }
+    Forbidden:
+      description: The caller lacks route data editor rights for this import.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetail' }
+    NotFound:
+      description: No runs are recorded for this correlation id, or no run of this stage.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetail' }
+    Gone:
+      description: The run finished, but no report is available for it.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetail' }
+    InternalServerError:
+      description: Unexpected error.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetail' }
+    BadGateway:
+      description: A report could not be read.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetail' }
+
+  schemas:
+    ValidationReports:
+      type: object
+      required: [correlationId, codespace, validationRuns]
+      properties:
+        correlationId:
+          type: string
+          example: 9f3c1e7a-4b2d-4c8e-9f10-3a5b6c7d8e9f
+        codespace:
+          type: string
+          description: Resolved from the correlation id. Never prefixed.
+          example: abc
+        validationRuns:
+          type: array
+          description: >-
+            Ordered by completion time, with runs not yet complete last. Rule 6.1 requires a
+            deterministic order; ties break on insertion order, so repeated calls agree.
+          items: { $ref: '#/components/schemas/ValidationRun' }
+
+    ValidationRun:
+      type: object
+      required: [stage, status]
+      properties:
+        stage: { $ref: '#/components/schemas/Stage' }
+        status: { $ref: '#/components/schemas/Status' }
+        startedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Null if no start event was recorded for this run.
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Null while the run is in progress.
+        entries:
+          type: array
+          nullable: true
+          description: |
+            Ordered by severity, then by file name — deterministic per rule 6.1.
+
+            Empty means the run found nothing. Null means no report is available — either the run
+            has not finished, or no report was produced for it.
+          items: { $ref: '#/components/schemas/ValidationEntry' }
+
+    ValidationRunDetail:
+      type: object
+      description: One run. Carries the codespace, which the collection element does not.
+      required: [correlationId, codespace, stage, status]
+      properties:
+        correlationId:
+          type: string
+          example: 9f3c1e7a-4b2d-4c8e-9f10-3a5b6c7d8e9f
+        codespace:
+          type: string
+          example: abc
+        stage: { $ref: '#/components/schemas/Stage' }
+        status: { $ref: '#/components/schemas/Status' }
+        startedAt:
+          type: string
+          format: date-time
+          nullable: true
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+        entries:
+          type: array
+          nullable: true
+          items: { $ref: '#/components/schemas/ValidationEntry' }
+
+    Stage:
+      type: string
+      description: |
+        The validation step. Deliberately not a closed enum: the external vocabulary is curated so
+        it can grow without breaking generated clients.
+      example: PREVALIDATION
+      examples:
+        - PREVALIDATION
+        - POSTVALIDATION
+        - BLOCKS_POSTVALIDATION
+        - FLEX_POSTVALIDATION
+        - MERGED_POSTVALIDATION
+
+    Status:
+      type: string
+      description: A fixed set, controlled by Entur.
+      enum: [IN_PROGRESS, OK, FAILED]
+
+    ValidationEntry:
+      type: object
+      required: [code, severity, message]
+      properties:
+        code:
+          type: string
+          description: The validation rule name. A free string, deliberately not enumerated.
+          example: NETEX_ID_1
+        severity:
+          type: string
+          description: On the entry, not the rule — a rule's severity may change over time.
+          enum: [ERROR, WARNING, INFO]
+        message:
+          type: string
+          example: Invalid id structure on element ServiceJourney
+        fileName:
+          type: string
+          nullable: true
+          example: ABC_line_1.xml
+        objectId:
+          type: string
+          nullable: true
+          example: ABC:ServiceJourney:123
+        lineNumber:
+          type: integer
+          format: int32
+          nullable: true
+          example: 1420
+        columnNumber:
+          type: integer
+          format: int32
+          nullable: true
+          example: 18
+
+    ProblemDetail:
+      type: object
+      description: RFC 9457.
+      required: [title, status]
+      properties:
+        title: { type: string, example: Not Found }
+        status: { type: integer, format: int32, example: 404 }
+        detail: { type: string, example: Correlation id not found }
