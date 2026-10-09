@@ -1,0 +1,90 @@
+{
+  "codespace": "tst",
+  "validationReportId": "tst_20260101120000000000",
+  "creationDate": "2026-01-01T12:05:31.421337",
+  "numberOfValidationEntriesPerRule": {
+    "Unsupported NeTEx version": 1,
+    "NeTEx ID unresolved reference": 2,
+    "Operator missing CustomerServiceContactDetails": 1,
+    "Feeder and consumer vehicle journeys have no interchange possibilities": 1,
+    "Operator missing CompanyNumber": 1,
+    "Authority missing LegalName": 1,
+    "Distance between stop point and start of linestring, exceeds max limit, in LinkSequenceProjection": 1,
+    "SYSTEM_ERROR": 1
+  },
+  "validationReportEntries": [
+    {
+      "name": "Unsupported NeTEx version",
+      "message": "NeTEx version 2 is not supported. The most recent supported NeTEx version is 1.15.2",
+      "severity": "CRITICAL",
+      "objectId": "TST:ServiceFrame:1",
+      "fileName": "TST_line_1.xml",
+      "lineNumber": 12,
+      "columnNumber": 4
+    },
+    {
+      "name": "NeTEx ID unresolved reference",
+      "message": "Unresolved reference to TST:ScheduledStopPoint:9 from TST:ServiceJourney:1",
+      "severity": "ERROR",
+      "objectId": "TST:ServiceJourney:1",
+      "fileName": "TST_line_1.xml",
+      "lineNumber": 1420,
+      "columnNumber": 18
+    },
+    {
+      "name": "NeTEx ID unresolved reference",
+      "message": "Unresolved reference to TST:ScheduledStopPoint:9 from TST:ServiceJourney:2",
+      "severity": "ERROR",
+      "objectId": "TST:ServiceJourney:2",
+      "fileName": "TST_line_2.xml",
+      "lineNumber": 980,
+      "columnNumber": 18
+    },
+    {
+      "name": "Operator missing CustomerServiceContactDetails",
+      "message": "Missing CustomerServiceContactDetails element on Operator",
+      "severity": "WARNING",
+      "objectId": "TST:Operator:1",
+      "fileName": "_TST_shared_data.xml"
+    },
+    {
+      "name": "Feeder and consumer vehicle journeys have no interchange possibilities",
+      "message": "ServiceJourneyInterchange TST:ServiceJourneyInterchange:1 has no interchange possibilities",
+      "severity": "WARNING",
+      "objectId": "TST:ServiceJourneyInterchange:1",
+      "fileName": "TST_line_2.xml"
+    },
+    {
+      "name": "Distance between stop point and start of linestring, exceeds max limit, in LinkSequenceProjection",
+      "message": "Distance between stop point and start of linestring exceeds max limit",
+      "severity": "WARNING",
+      "objectId": "TST:ServiceLink:1",
+      "fileName": "TST_line_1.xml",
+      "lineNumber": 0,
+      "columnNumber": 0
+    },
+    {
+      "name": "Operator missing CompanyNumber",
+      "message": "Missing CompanyNumber element on Operator",
+      "severity": "INFO",
+      "objectId": "TST:Operator:1",
+      "fileName": "_TST_shared_data.xml",
+      "lineNumber": 120,
+      "columnNumber": 13
+    },
+    {
+      "name": "Authority missing LegalName",
+      "message": "Missing LegalName element on Authority",
+      "severity": "INFO",
+      "fileName": "_TST_shared_data.xml",
+      "lineNumber": 40,
+      "columnNumber": 70
+    },
+    {
+      "name": "SYSTEM_ERROR",
+      "message": "System error while running cross-validation of files in the dataset",
+      "severity": "ERROR",
+      "fileName": "N/A"
+    }
+  ]
+}
