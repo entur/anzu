@@ -136,6 +136,17 @@
             <artifactId>organisation</artifactId>
             <version>${entur-helpers.version}</version>
         </dependency>
+        <!-- BlobStoreRepository, plus the local-disk and in-memory implementations. -->
+        <dependency>
+            <groupId>org.entur.ror.helpers</groupId>
+            <artifactId>storage</artifactId>
+            <version>${entur-helpers.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.entur.ror.helpers</groupId>
+            <artifactId>storage-gcp-gcs</artifactId>
+            <version>${entur-helpers.version}</version>
+        </dependency>
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
