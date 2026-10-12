@@ -1,6 +1,7 @@
 package no.entur.anzu.api.model
 
-enum class Severity { CRITICAL, ERROR, WARNING, INFO }
+/** Ordered most severe first. UNKNOWN is last: it is the absence of a severity, not a claim. */
+enum class Severity { CRITICAL, ERROR, WARNING, INFO, UNKNOWN }
 
 data class ValidationEntry(
     val code: String,

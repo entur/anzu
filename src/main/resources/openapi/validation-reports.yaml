@@ -273,8 +273,11 @@ components:
           example: NETEX_ID_1
         severity:
           type: string
-          description: On the entry, not the rule — a rule's severity may change over time.
-          enum: [ERROR, WARNING, INFO]
+          description: >-
+            On the entry, not the rule — a rule's severity may change over time.
+            UNKNOWN means the producing validator reported a severity this API does not
+            recognise; the entry is still complete in every other respect.
+          enum: [CRITICAL, ERROR, WARNING, INFO, UNKNOWN]
         message:
           type: string
           example: Invalid id structure on element ServiceJourney

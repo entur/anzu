@@ -80,10 +80,12 @@ class ResponseSerialisationTest {
     }
 
     @Test
-    fun `severity is exactly the four values the contract declares`() {
-        // CRITICAL is in the set because it occurs in real reports. Dropping it would make a live
-        // severity unrepresentable.
-        assertEquals(listOf("CRITICAL", "ERROR", "WARNING", "INFO"), Severity.entries.map { it.name })
+    fun `severity is exactly the values the contract declares, in severity order`() {
+        // The order is the sort order used for entries, so it is part of the contract.
+        assertEquals(
+            listOf("CRITICAL", "ERROR", "WARNING", "INFO", "UNKNOWN"),
+            Severity.entries.map { it.name }
+        )
     }
 
     @Test
