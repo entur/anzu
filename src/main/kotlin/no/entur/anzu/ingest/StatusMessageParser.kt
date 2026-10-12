@@ -32,7 +32,6 @@ class StatusMessageParser {
         val status = STATUSES[body.trim()]
             ?: return ParseResult.Unprocessable("unrecognised status body '$body'")
 
-        val inProgress = status == RunStatus.IN_PROGRESS
         return ParseResult.Parsed(
             StatusMessage(
                 validationReportId = reportId,
@@ -41,8 +40,7 @@ class StatusMessageParser {
                 referential = referential,
                 stage = stage,
                 status = status,
-                startedAt = publishedAt.takeIf { inProgress },
-                completedAt = publishedAt.takeUnless { inProgress },
+                publishedAt = publishedAt,
             )
         )
     }

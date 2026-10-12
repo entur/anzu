@@ -44,21 +44,16 @@ class StatusMessageParserTest {
     }
 
     @Test
-    fun `a started message carries only startedAt`() {
+    fun `started maps to IN_PROGRESS and keeps the publish time`() {
         val message = parsed("started")
 
         assertEquals(RunStatus.IN_PROGRESS, message.status)
-        assertEquals(publishedAt, message.startedAt)
-        assertEquals(null, message.completedAt)
+        assertEquals(publishedAt, message.publishedAt)
     }
 
     @Test
-    fun `an ok message carries only completedAt`() {
-        val message = parsed("ok")
-
-        assertEquals(RunStatus.OK, message.status)
-        assertEquals(null, message.startedAt)
-        assertEquals(publishedAt, message.completedAt)
+    fun `ok maps to OK`() {
+        assertEquals(RunStatus.OK, parsed("ok").status)
     }
 
     @Test

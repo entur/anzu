@@ -2,13 +2,14 @@ package no.entur.anzu.ingest
 
 import no.entur.anzu.index.RunStatus
 import no.entur.anzu.index.Stage
+import no.entur.anzu.index.ValidationEvent
 import java.time.Instant
 
 /**
  * One status event from `AntuNetexValidationStatusQueue`, parsed.
  *
- * [startedAt] and [completedAt] are the Pub/Sub publish time, not the time of ingest. Publish time
- * is stable across redelivery, which is what keeps the upsert idempotent.
+ * [publishedAt] is the Pub/Sub publish time, not the time of ingest. It is stable across
+ * redelivery, which is what lets the index drop duplicates.
  */
 data class StatusMessage(
     val validationReportId: String,
@@ -17,9 +18,18 @@ data class StatusMessage(
     val referential: String,
     val stage: Stage,
     val status: RunStatus,
-    val startedAt: Instant?,
-    val completedAt: Instant?,
-)
+    val publishedAt: Instant,
+) {
+    fun toEvent() = ValidationEvent(
+        validationReportId = validationReportId,
+        correlationId = correlationId,
+        codespace = codespace,
+        referential = referential,
+        stage = stage,
+        status = status,
+        publishedAt = publishedAt,
+    )
+}
 
 sealed interface ParseResult {
     data class Parsed(val message: StatusMessage) : ParseResult
