@@ -1,13 +1,17 @@
 package no.entur.anzu.config
 
+import no.entur.anzu.api.ProblemDetailBody
 import org.entur.oauth2.multiissuer.MultiIssuerAuthenticationManagerResolver
 import org.entur.oauth2.multiissuer.MultiIssuerAuthenticationManagerResolverBuilder
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
+import org.springframework.security.web.AuthenticationEntryPoint
 import org.springframework.security.web.SecurityFilterChain
 
 /** Anzu validates the token itself rather than trusting anything upstream. */
@@ -40,6 +44,25 @@ class WebSecurityConfig {
             }
             .oauth2ResourceServer {
                 it.authenticationManagerResolver(authenticationManagerResolver)
+                it.authenticationEntryPoint(problemJsonUnauthorized())
             }
             .build()
+
+    /**
+     * A 401 is raised by the filter chain, so [no.entur.anzu.api.ProblemDetailsHandler] never sees
+     * it. Without this the response is an empty body, and the contract promises problem+json for
+     * every error. Same shape as every other problem, serialised here by hand because the advice is
+     * out of reach.
+     */
+    private fun problemJsonUnauthorized() = AuthenticationEntryPoint { _, response, _ ->
+        val problem = ProblemDetailBody(
+            title = HttpStatus.UNAUTHORIZED.reasonPhrase,
+            status = HttpStatus.UNAUTHORIZED.value(),
+        )
+        response.status = problem.status
+        response.contentType = MediaType.APPLICATION_PROBLEM_JSON_VALUE
+        response.characterEncoding = Charsets.UTF_8.name()
+        response.setHeader("WWW-Authenticate", "Bearer")
+        response.writer.write("""{"title":"${problem.title}","status":${problem.status}}""")
+    }
 }
