@@ -57,8 +57,22 @@ class ValidationStatusListener(
                 Disposition.ACK
             }
 
-            is ParseResult.Parsed ->
-                store(result.message, PubSubAttributes.deliveryAttempt(attributes))
+            is ParseResult.Parsed -> {
+                logger.info(
+                    "Storing validation status message in database. Stage {}, report id '{}', correlation id '{}'",
+                    attributes[PubSubAttributes.VALIDATION_STAGE],
+                    attributes[PubSubAttributes.VALIDATION_REPORT_ID],
+                    attributes[PubSubAttributes.CORRELATION_ID],
+                )
+                val disposition = store(result.message, PubSubAttributes.deliveryAttempt(attributes))
+                logger.info(
+                    "Done storing validation status message in database. Stage {}, report id '{}', correlation id '{}'",
+                    attributes[PubSubAttributes.VALIDATION_STAGE],
+                    attributes[PubSubAttributes.VALIDATION_REPORT_ID],
+                    attributes[PubSubAttributes.CORRELATION_ID],
+                )
+                return disposition
+            }
         }
 
     private fun store(message: StatusMessage, deliveryAttempt: Int): Disposition =
