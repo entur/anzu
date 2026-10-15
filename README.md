@@ -61,9 +61,10 @@ spring.datasource.url=jdbc:postgresql://localhost:5432/anzu
 spring.datasource.username=<your-db-user>
 spring.datasource.password=<your-db-password>
 
-# Pub/Sub, against the emulator. The topic and subscription are created at startup;
-# setting emulator-host is also what stops any gcloud credentials being read.
-spring.cloud.gcp.project-id=anzu-local
+# Make sure the project-id in your dev environment matches the project id
+# that your local antu is publishing validation status messages to, otherwise
+# anzu will not be able to pick up messages from antu.
+spring.cloud.gcp.project-id=test
 spring.cloud.gcp.pubsub.emulator-host=localhost:8085
 anzu.pubsub.enabled=true
 anzu.pubsub.validation-status-topic=AntuNetexValidationStatusQueue
