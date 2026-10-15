@@ -10,7 +10,11 @@ import org.springframework.web.reactive.function.client.WebClient
 
 /** Only needed when role assignments come from baba, which is the only outbound call anzu makes. */
 @Configuration
-@ConditionalOnProperty(value = ["anzu.security.role-assignment-extractor"], havingValue = "baba")
+@ConditionalOnProperty(
+    value = ["anzu.security.role-assignment-extractor"],
+    havingValue = "baba",
+    matchIfMissing = true,
+)
 class OAuth2Config {
 
     /** Anzu's own machine-to-machine client. A caller's token is never forwarded. */

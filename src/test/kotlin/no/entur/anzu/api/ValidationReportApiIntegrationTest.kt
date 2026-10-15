@@ -40,8 +40,8 @@ import java.time.Instant
  * The real stack over real HTTP: Postgres, the security filter chain, the controller and the
  * serialised JSON.
  *
- * Three boundaries are mocked, and only those: Auth0 (the token decoder), baba (the permission
- * lookup) and the blob store. Nothing in this test reaches an external service.
+ * Three boundaries are mocked, and only those: the token decoder, baba (the permission lookup)
+ * and the blob store. Nothing in this test reaches an external service.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Import(PostgresTestBase::class)
@@ -79,7 +79,7 @@ class ValidationReportApiIntegrationTest {
     fun setUp() {
         jdbc.sql("delete from validation_event").update()
 
-        // Stands in for Auth0: any bearer token authenticates, so no issuer is contacted.
+        // Mocks authentication, so no token is verified and no issuer is contacted.
         val authenticated = AuthenticationManager {
             TestingAuthenticationToken("caller", "n/a", "ROLE_USER").apply { isAuthenticated = true }
         }

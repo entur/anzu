@@ -19,11 +19,16 @@ import org.springframework.security.web.SecurityFilterChain
 @EnableWebSecurity
 class WebSecurityConfig {
 
-    /** With no issuer configured the resolver rejects every token, so the default is deny. */
+    /**
+     * With no issuer configured the resolver rejects every token, so the default is deny.
+     *
+     * The builder's method names come from the helper library and name a provider; the issuer that
+     * is actually trusted is whatever the property is set to.
+     */
     @Bean
     fun authenticationManagerResolver(
-        @Value("\${anzu.oauth2.resourceserver.auth0.partner.jwt.issuer-uri:}") issuer: String,
-        @Value("\${anzu.oauth2.resourceserver.auth0.partner.jwt.audience:}") audience: String,
+        @Value("\${anzu.oauth2.resourceserver.partner.jwt.issuer-uri:}") issuer: String,
+        @Value("\${anzu.oauth2.resourceserver.partner.jwt.audience:}") audience: String,
     ): MultiIssuerAuthenticationManagerResolver =
         MultiIssuerAuthenticationManagerResolverBuilder()
             .withEnturPartnerAuth0Issuer(issuer)

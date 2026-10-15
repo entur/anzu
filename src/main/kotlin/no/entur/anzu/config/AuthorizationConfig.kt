@@ -18,7 +18,6 @@ class AuthorizationConfig {
     @ConditionalOnProperty(
         value = ["anzu.security.role-assignment-extractor"],
         havingValue = "jwt",
-        matchIfMissing = true,
     )
     @Bean
     fun jwtRoleAssignmentExtractor(): RoleAssignmentExtractor = JwtRoleAssignmentExtractor()
@@ -26,6 +25,7 @@ class AuthorizationConfig {
     @ConditionalOnProperty(
         value = ["anzu.security.role-assignment-extractor"],
         havingValue = "baba",
+        matchIfMissing = true,
     )
     @Bean
     fun babaRoleAssignmentExtractor(
