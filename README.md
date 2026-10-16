@@ -100,8 +100,7 @@ installation. Start it with:
 gcloud beta emulators pubsub start
 ```
 
-It listens on port 8085 by default. The topic and subscription are created on startup, so there is
-nothing to set up by hand.
+It listens on port 8085 by default. The topic and subscription are created on startup.
 
 ### Authenticating locally
 
