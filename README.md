@@ -4,7 +4,7 @@
 > `draft` and may still change. Infrastructure, Helm charts and the build/deploy pipeline live in a
 > separate repository.
 
-Serves NeTEx validation reports to the organisations that delivered the data.
+Serves a validation reports REST API to organizations that have delivered NeTEx data to Entur.
 
 An import runs several validation stages, each producing its own report, so the unit of access is
 the whole import rather than a single run:
