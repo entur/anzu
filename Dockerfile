@@ -1,6 +1,9 @@
-FROM bellsoft/liberica-openjre-alpine:25
-RUN apk add --no-cache tini
+FROM gcr.io/distroless/java25-debian13:nonroot
+
 WORKDIR /app
-COPY target/anzu-*.jar /app/anzu.jar
+COPY target/anzu-*.jar app.jar
+
 EXPOSE 8080
-ENTRYPOINT ["/sbin/tini", "--", "java", "-jar", "/app/anzu.jar"]
+# The base image's ENTRYPOINT ["java", "-jar"] would swallow any JVM flags, so give the full command.
+# --enable-native-access: grpc-netty-shaded (via spring-cloud-gcp pubsub) uses Unsafe/native on JDK 25.
+ENTRYPOINT ["java", "--enable-native-access=ALL-UNNAMED", "-jar", "app.jar"]
