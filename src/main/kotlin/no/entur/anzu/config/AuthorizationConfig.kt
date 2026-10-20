@@ -10,11 +10,13 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.context.annotation.Profile
 import org.springframework.web.reactive.function.client.WebClient
 
 @Configuration
 class AuthorizationConfig {
 
+    @Profile("local", "test")
     @ConditionalOnProperty(
         value = ["anzu.security.role-assignment-extractor"],
         havingValue = "jwt",
@@ -48,7 +50,10 @@ class AuthorizationConfig {
             roleAssignmentExtractor,
         )
 
-    /** Local development only. Grants the one check anzu makes; everything else is inherited. */
+    /**
+     * Local development only. Grants the one check anzu makes; everything else is inherited.
+     */
+    @Profile("local")
     @ConditionalOnProperty(
         value = ["anzu.security.authorization-service"],
         havingValue = "local",
