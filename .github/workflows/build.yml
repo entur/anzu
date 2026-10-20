@@ -1,0 +1,99 @@
+name: Build it
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: "${{ github.workflow }}-${{ github.ref }}"
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint
+    uses: entur/gha-docker/.github/workflows/lint.yml@v1
+
+  maven-build:
+    name: Build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v6
+        with:
+          java-version: '25'
+          distribution: liberica
+          cache: maven
+
+      # Testcontainers needs a Docker daemon; ubuntu-24.04 ships one, so no setup step.
+      - name: Build with Maven
+        run: ./mvnw --batch-mode --no-transfer-progress verify
+
+      - name: Archive build artifacts
+        if: success() && github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v7
+        with:
+          name: jar-artifact
+          path: target/anzu-*.jar
+          retention-days: 1
+          overwrite: true
+
+  # PRs only: nothing deploys from this repo yet, so main has no use for an image. The artifact
+  # layout matches what docker-scan expects (artifact `anzu` holding `anzu.tar`).
+  docker-build:
+    name: Docker Build
+    if: github.event_name == 'pull_request'
+    needs: [maven-build, lint]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    outputs:
+      image_artifact: anzu
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: jar-artifact
+          path: target
+
+      - uses: docker/setup-buildx-action@v4
+
+      - uses: docker/build-push-action@v7
+        with:
+          context: .
+          tags: anzu
+          outputs: type=docker,dest=/tmp/anzu.tar
+          push: false
+          provenance: false
+          cache-from: type=gha,ignore-error=true
+          cache-to: type=gha,mode=max,ignore-error=true
+
+      # Reaching Spring's startup line proves the JRE accepted the entrypoint flags and that the
+      # bytecode loaded. Failing afterwards on cluster-only configuration is expected.
+      - name: Smoke test the image
+        run: |
+          docker load -i /tmp/anzu.tar
+          timeout 180 docker run --rm anzu > smoke.log 2>&1 || true
+          if ! grep -q "using Java" smoke.log; then
+            echo "::error::image did not reach Spring startup"
+            cat smoke.log
+            exit 1
+          fi
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: anzu
+          path: /tmp/anzu.tar
+          retention-days: 1
+
+  scan:
+    needs: [docker-build]
+    uses: entur/gha-security/.github/workflows/docker-scan.yml@v2
+    with:
+      image_artifact: ${{ needs.docker-build.outputs.image_artifact }}
