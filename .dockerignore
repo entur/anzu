@@ -1,0 +1,5 @@
+# Only the boot jar is needed. target/ must be re-included before its contents can be.
+*
+!target
+target/*
+!target/anzu-*.jar
