@@ -1,5 +1,9 @@
 package no.entur.anzu.api
 
+import ch.qos.logback.classic.Level
+import ch.qos.logback.classic.Logger
+import ch.qos.logback.classic.spi.ILoggingEvent
+import ch.qos.logback.core.read.ListAppender
 import no.entur.anzu.PostgresTestBase
 import no.entur.anzu.index.RunStatus
 import no.entur.anzu.index.Stage
@@ -22,6 +26,7 @@ import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import org.rutebanken.helper.organisation.authorization.AuthorizationService
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.server.LocalServerPort
@@ -197,19 +202,50 @@ class ValidationReportApiIntegrationTest {
     }
 
     @Test
-    fun `an import that crossed into a migration dataspace is authorized against the originating codespace`() {
-        // Authorizing against a later run would authorize a migrated codespace against a delivery
-        // made to the original provider.
+    fun `an import whose runs disagree on the codespace is refused with 500`() {
         insert("tst_1", Stage.PREVALIDATION, RunStatus.OK, "tst", t0.plusSeconds(60))
         insert("rb_other_2", Stage.POSTVALIDATION, RunStatus.OK, "other", t0.plusSeconds(600))
+        whenever(blobs.read(any())).thenReturn(BlobResult.Found(cleanBlob))
+
+        val handlerLog = LoggerFactory.getLogger(ProblemDetailsHandler::class.java) as Logger
+        val logged = ListAppender<ILoggingEvent>().apply { start() }
+        handlerLog.addAppender(logged)
+
+        try {
+            listOf(get("/validation-reports/c-1"), get("/validation-reports/c-1/prevalidation"))
+                .forEach { response ->
+                    assertEquals(500, response.statusCode())
+                    assertTrue(contentType(response).startsWith("application/problem+json"))
+                    assertFalse(response.body().lowercase().contains("tst"))
+                    assertFalse(response.body().lowercase().contains("other"))
+                }
+
+            verify(authorizationService, never()).canEditRouteData(any())
+
+            val refusals = logged.list.filter { it.level == Level.ERROR }
+            assertEquals(2, refusals.size, "both endpoints should log the refusal")
+            refusals.forEach {
+                assertTrue(it.formattedMessage.contains("c-1"), it.formattedMessage)
+                assertTrue(it.formattedMessage.contains("tst"), it.formattedMessage)
+                assertTrue(it.formattedMessage.contains("other"), it.formattedMessage)
+            }
+        } finally {
+            handlerLog.detachAppender(logged)
+        }
+    }
+
+    @Test
+    fun `both referential forms of one import are one codespace, and are served`() {
+        // The case the guard above must not fire on: prevalidation files under the bare codespace
+        // and later stages under rb_, and antu maps both back to the same codespace.
+        insert("tst_1", Stage.PREVALIDATION, RunStatus.OK, "tst", t0.plusSeconds(60), referential = "tst")
+        insert("rb_tst_2", Stage.POSTVALIDATION, RunStatus.OK, "tst", t0.plusSeconds(600), referential = "rb_tst")
         whenever(blobs.read(any())).thenReturn(BlobResult.Found(cleanBlob))
 
         val response = get("/validation-reports/c-1")
 
         assertEquals(200, response.statusCode())
         assertTrue(response.body().contains("\"codespace\":\"tst\""))
-        verify(authorizationService).canEditRouteData("TST")
-        verify(authorizationService, never()).canEditRouteData("OTHER")
     }
 
     @Test

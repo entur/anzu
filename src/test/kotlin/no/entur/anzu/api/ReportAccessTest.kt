@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
@@ -34,16 +35,61 @@ class ReportAccessTest {
     )
 
     @Test
-    fun `the codespace comes from the earliest run`() {
-        // Runs under one correlation id need not share a codespace: an import crossing into a
-        // migration target records the target on its later runs.
+    fun `runs that disagree on the codespace are refused`() {
         val runs = listOf(
             run("rut", Stage.PREVALIDATION, t0.plusSeconds(60)),
             run("sky", Stage.POSTVALIDATION, t0.plusSeconds(600)),
         )
-        whenever(authorizationService.canEditRouteData("RUT")).thenReturn(true)
 
-        assertEquals("rut", access.authorize(runs, "c-1"))
+        assertThrows<InconsistentIndexException> { access.authorize(runs, "c-1") }
+    }
+
+    @Test
+    fun `the refusal happens before anyone is authorized`() {
+        val runs = listOf(
+            run("rut", Stage.PREVALIDATION, t0.plusSeconds(60)),
+            run("sky", Stage.POSTVALIDATION, t0.plusSeconds(600)),
+        )
+
+        assertThrows<InconsistentIndexException> { access.authorize(runs, "c-1") }
+
+        verify(authorizationService, never()).canEditRouteData(any())
+    }
+
+    @Test
+    fun `the refusal names the correlation id and the codespaces, for the log`() {
+        val runs = listOf(
+            run("rut", Stage.PREVALIDATION, t0.plusSeconds(60)),
+            run("sky", Stage.POSTVALIDATION, t0.plusSeconds(600)),
+        )
+
+        val thrown = assertThrows<InconsistentIndexException> { access.authorize(runs, "c-1") }
+
+        assertTrue(thrown.message!!.contains("c-1"))
+        assertTrue(thrown.message!!.contains("rut"))
+        assertTrue(thrown.message!!.contains("sky"))
+    }
+
+    @Test
+    fun `codespaces differing only in case are one codespace`() {
+        val runs = listOf(
+            run("tst", Stage.PREVALIDATION, t0.plusSeconds(60)),
+            run("TST", Stage.POSTVALIDATION, t0.plusSeconds(600)),
+        )
+        whenever(authorizationService.canEditRouteData("TST")).thenReturn(true)
+
+        assertEquals("tst", access.authorize(runs, "c-1"))
+    }
+
+    @Test
+    fun `one codespace across every run is returned`() {
+        val runs = listOf(
+            run("tst", Stage.PREVALIDATION, t0.plusSeconds(60)),
+            run("tst", Stage.POSTVALIDATION, t0.plusSeconds(600)),
+        )
+        whenever(authorizationService.canEditRouteData("TST")).thenReturn(true)
+
+        assertEquals("tst", access.authorize(runs, "c-1"))
     }
 
     @Test
@@ -87,14 +133,4 @@ class ReportAccessTest {
         }
     }
 
-    @Test
-    fun `an in-progress run does not win the earliest-run tiebreak`() {
-        val runs = listOf(
-            run("rut", Stage.PREVALIDATION, t0.plusSeconds(60)),
-            run("sky", Stage.POSTVALIDATION, null),
-        )
-        whenever(authorizationService.canEditRouteData("RUT")).thenReturn(true)
-
-        assertEquals("rut", access.authorize(runs, "c-1"))
-    }
 }

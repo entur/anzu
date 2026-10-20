@@ -18,6 +18,7 @@ class ProblemDetailsHandlerTest {
             handler.forbidden(ForbiddenException("Insufficient privileges for correlation id c-1")),
             handler.gone(GoneException("No report available")),
             handler.badGateway(ReportUnavailableException("boom")),
+            handler.inconsistentIndex(InconsistentIndexException("boom")),
             handler.unanticipated(IllegalStateException("boom")),
         )
 
@@ -43,6 +44,18 @@ class ProblemDetailsHandlerTest {
 
         assertEquals(HttpStatus.BAD_GATEWAY.value(), body.status)
         assertFalse(body.detail!!.contains("anzu-prod"))
+    }
+
+    @Test
+    fun `an inconsistent index is a 500 the caller cannot tell from any other internal fault`() {
+        val body = handler.inconsistentIndex(
+            InconsistentIndexException("Correlation id c-1 maps to more than one codespace: [other, tst]")
+        ).body!!
+
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR.value(), body.status)
+        assertFalse(body.detail!!.contains("tst"))
+        assertFalse(body.detail!!.contains("other"))
+        assertEquals(handler.unanticipated(IllegalStateException("boom")).body!!.detail, body.detail)
     }
 
     @Test

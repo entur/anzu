@@ -43,6 +43,15 @@ class ProblemDetailsHandler {
         return problem(HttpStatus.BAD_GATEWAY, "A validation report could not be read.")
     }
 
+    @ExceptionHandler(InconsistentIndexException::class)
+    fun inconsistentIndex(e: InconsistentIndexException): ResponseEntity<ProblemDetailBody> {
+        logger.error("Refusing to serve an import with an inconsistent codespace. {}", e.message)
+        return problem(
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "The request could not be completed because of an internal error.",
+        )
+    }
+
     /**
      * The cause is logged, never returned: it names codespaces and the state of the index. Uniform,
      * so no caller can tell two internal faults apart from the outside.
