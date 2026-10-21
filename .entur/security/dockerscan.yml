@@ -1,0 +1,9 @@
+apiVersion: entur.io/securitytools/v1
+kind: DockerScanConfig
+metadata:
+  id: anzu
+spec:
+  allowlist:
+    - cve: "CVE-2019-1010022"
+      comment: "Disputed upstream: glibc maintainers reject it and Debian rates it negligible. GitHub buckets it as critical because NVD scores it 9.8. No fix exists, and every glibc-based image carries it."
+      reason: "wont_fix"
