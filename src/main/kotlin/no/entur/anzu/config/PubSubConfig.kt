@@ -1,14 +1,12 @@
 package no.entur.anzu.config
 
-import com.google.cloud.pubsub.v1.Subscriber
 import com.google.cloud.spring.pubsub.core.PubSubTemplate
-import com.google.cloud.spring.pubsub.support.BasicAcknowledgeablePubsubMessage
 import no.entur.anzu.ingest.ValidationStatusListener
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import java.time.Duration
 
 /**
  * Subscribes to antu's validation status queue.
@@ -22,17 +20,16 @@ import org.springframework.context.annotation.Configuration
 @ConditionalOnProperty(value = ["anzu.pubsub.enabled"], havingValue = "true", matchIfMissing = true)
 class PubSubConfig {
 
-    private val logger = LoggerFactory.getLogger(javaClass)
-
+    /**
+     * [shutdownTimeout] must stay below `spring.lifecycle.timeout-per-shutdown-phase`, or Spring
+     * gives up on the phase before the subscriber has finished stopping and says so in the log.
+     */
     @Bean
-    fun validationStatusSubscriber(
+    fun validationStatusSubscription(
         pubSubTemplate: PubSubTemplate,
         listener: ValidationStatusListener,
         @Value("\${anzu.pubsub.validation-status-subscription}") subscription: String,
-    ): Subscriber {
-        logger.info("Subscribing to the validation status queue on '{}'", subscription)
-        return pubSubTemplate.subscribe(subscription) { message: BasicAcknowledgeablePubsubMessage ->
-            listener.receive(message)
-        }
-    }
+        @Value("\${anzu.pubsub.shutdown-timeout:5s}") shutdownTimeout: Duration,
+    ): ValidationStatusSubscription =
+        ValidationStatusSubscription(pubSubTemplate, listener, subscription, shutdownTimeout)
 }

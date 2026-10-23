@@ -1,6 +1,6 @@
 package no.entur.anzu
 
-import com.google.cloud.pubsub.v1.Subscriber
+import no.entur.anzu.config.ValidationStatusSubscription
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -21,6 +21,6 @@ class AppTest {
 
     @Test
     fun `no subscriber exists, so no test reaches Pub-Sub`() {
-        assertTrue(context.getBeansOfType(Subscriber::class.java).isEmpty())
+        assertTrue(context.getBeansOfType(ValidationStatusSubscription::class.java).isEmpty())
     }
 }
