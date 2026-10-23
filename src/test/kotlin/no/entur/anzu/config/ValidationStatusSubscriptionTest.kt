@@ -1,18 +1,28 @@
 package no.entur.anzu.config
 
+import ch.qos.logback.classic.Level
+import ch.qos.logback.classic.Logger
+import ch.qos.logback.classic.spi.ILoggingEvent
+import ch.qos.logback.core.read.ListAppender
+import com.google.api.core.ApiService
 import com.google.cloud.pubsub.v1.Subscriber
 import com.google.cloud.spring.pubsub.core.PubSubTemplate
 import com.google.cloud.spring.pubsub.support.BasicAcknowledgeablePubsubMessage
 import no.entur.anzu.ingest.ValidationStatusListener
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertDoesNotThrow
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
+import org.mockito.kotlin.argumentCaptor
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.DisposableBean
 import org.springframework.boot.convert.ApplicationConversionService
 import org.springframework.context.annotation.AnnotationConfigApplicationContext
@@ -35,6 +45,21 @@ class ValidationStatusSubscriptionTest {
 
     private val pubSubTemplate: PubSubTemplate = mock {
         on { subscribe(any(), any<Consumer<BasicAcknowledgeablePubsubMessage>>()) } doReturn subscriber
+    }
+
+    private val logged = ListAppender<ILoggingEvent>()
+
+    @BeforeEach
+    fun captureLogging() {
+        logged.start()
+        (LoggerFactory.getLogger(ValidationStatusSubscription::class.java) as Logger)
+            .addAppender(logged)
+    }
+
+    @AfterEach
+    fun releaseLogging() {
+        (LoggerFactory.getLogger(ValidationStatusSubscription::class.java) as Logger)
+            .detachAppender(logged)
     }
 
     @Test
@@ -95,6 +120,73 @@ class ValidationStatusSubscriptionTest {
         assertDoesNotThrow { subscription.stop() }
         assertFalse(subscription.isRunning(), "a subscriber that failed is still stopped")
     }
+
+    /**
+     * At one replica a dead subscriber stops ingest outright and is obvious. At two the other pod
+     * absorbs the whole queue and everything still looks healthy, so the only evidence is this log
+     * line.
+     */
+    @Test
+    fun `a subscriber that fails permanently is reported`() {
+        subscription().start()
+
+        subscriberListener().failed(ApiService.State.RUNNING, RuntimeException("PERMISSION_DENIED"))
+
+        val error = errors().single()
+        assertTrue(
+            error.formattedMessage.contains("a-subscription"),
+            "the subscription is what someone has to go and look at: ${error.formattedMessage}",
+        )
+    }
+
+    /**
+     * Guava replays nothing to a listener added after the fact, and the failures that matter most —
+     * a subscription that does not exist, a service account without rights to it — are exactly the
+     * ones that land while the subscriber is still starting.
+     */
+    @Test
+    fun `a subscriber that failed before the listener was attached is still reported`() {
+        whenever(subscriber.state()) doReturn ApiService.State.FAILED
+        whenever(subscriber.failureCause()) doReturn RuntimeException("NOT_FOUND")
+
+        subscription().start()
+
+        assertEquals(1, errors().size)
+    }
+
+    /** Both the listener and the state check can see the same failure. Only one of them says so. */
+    @Test
+    fun `a failure is reported once`() {
+        subscription().start()
+        val listener = subscriberListener()
+        val cause = RuntimeException("PERMISSION_DENIED")
+
+        listener.failed(ApiService.State.RUNNING, cause)
+        listener.failed(ApiService.State.RUNNING, cause)
+
+        assertEquals(1, errors().size)
+    }
+
+    /** Stopping is not failing. A deploy must not look like an outage. */
+    @Test
+    fun `a failure while shutting down is not reported`() {
+        val subscription = subscription()
+        subscription.start()
+        val listener = subscriberListener()
+        subscription.stop()
+
+        listener.failed(ApiService.State.STOPPING, RuntimeException("cancelled"))
+
+        assertTrue(errors().isEmpty(), "shutdown reported a failure: ${errors().map { it.formattedMessage }}")
+    }
+
+    private fun subscriberListener(): ApiService.Listener {
+        val listener = argumentCaptor<ApiService.Listener>()
+        verify(subscriber).addListener(listener.capture(), any())
+        return listener.firstValue
+    }
+
+    private fun errors() = logged.list.filter { it.level == Level.ERROR }
 
     private fun subscription() = ValidationStatusSubscription(
         pubSubTemplate,

@@ -1,5 +1,6 @@
 package no.entur.anzu.config
 
+import com.google.api.core.ApiService
 import com.google.cloud.pubsub.v1.Subscriber
 import com.google.cloud.spring.pubsub.core.PubSubTemplate
 import com.google.cloud.spring.pubsub.support.BasicAcknowledgeablePubsubMessage
@@ -7,8 +8,10 @@ import no.entur.anzu.ingest.ValidationStatusListener
 import org.slf4j.LoggerFactory
 import org.springframework.context.SmartLifecycle
 import java.time.Duration
+import java.util.concurrent.Executor
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * The validation status subscriber, with its lifetime tied to the application context.
@@ -34,14 +37,58 @@ class ValidationStatusSubscription(
     @Volatile
     private var subscriber: Subscriber? = null
 
+    @Volatile
+    private var closing = false
+
+    private val failureReported = AtomicBoolean(false)
+
     override fun start() {
         logger.info("Subscribing to the validation status queue on '{}'", subscription)
-        subscriber = pubSubTemplate.subscribe(subscription) { message: BasicAcknowledgeablePubsubMessage ->
+        closing = false
+        failureReported.set(false)
+
+        val started = pubSubTemplate.subscribe(subscription) { message: BasicAcknowledgeablePubsubMessage ->
             listener.receive(message)
+        }
+        watchForTerminalFailure(started)
+        subscriber = started
+    }
+
+    /**
+     * A status the client does not retry leaves the subscriber FAILED for good, and nothing else
+     * notices: the pod stays healthy and keeps serving the API with ingest silently switched off.
+     * At more than one replica the surviving pod takes the whole queue, so there is no backlog to
+     * give it away either — this log line is the only evidence.
+     */
+    private fun watchForTerminalFailure(subscriber: Subscriber) {
+        subscriber.addListener(
+            object : ApiService.Listener() {
+                override fun failed(from: ApiService.State, failure: Throwable) =
+                    reportTerminalFailure(failure)
+            },
+            Executor { it.run() },
+        )
+
+        if (subscriber.state() == ApiService.State.FAILED) {
+            reportTerminalFailure(subscriber.failureCause())
         }
     }
 
+    private fun reportTerminalFailure(failure: Throwable) {
+        if (closing || !failureReported.compareAndSet(false, true)) {
+            return
+        }
+        logger.error(
+            "The validation status subscriber failed permanently. Nothing more will be consumed " +
+                "from '{}' until this pod is replaced. Check that the subscription exists and " +
+                "that this service account holds roles/pubsub.subscriber on it.",
+            subscription,
+            failure,
+        )
+    }
+
     override fun stop() {
+        closing = true
         val running = subscriber ?: return
         subscriber = null
 
