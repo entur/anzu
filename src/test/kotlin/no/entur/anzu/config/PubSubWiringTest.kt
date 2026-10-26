@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.Import
 import org.springframework.test.annotation.DirtiesContext
+import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.testcontainers.containers.PubSubEmulatorContainer
@@ -43,6 +44,7 @@ import java.time.Duration
     ]
 )
 @Import(PostgresTestBase::class)
+@ActiveProfiles("test")
 // The Pub/Sub admin clients hold non-daemon gax threads that otherwise outlive the test run.
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 class PubSubWiringTest {

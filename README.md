@@ -40,15 +40,34 @@ mvn clean verify
 Requires Java 25 and a running Docker daemon — the tests use Testcontainers for Postgres and the
 Pub/Sub emulator.
 
+## Configuration
+
+Configuration lives with the code, in `src/main/resources`:
+
+| File | Holds |
+| --- | --- |
+| `application.properties` | Defaults that apply everywhere, and the profile groups |
+| `application-gcp.properties` | Anything backed by an environment variable the chart injects |
+| `application-dev.properties` | The dev environment's project ids, URLs and subscription |
+
+The active profile comes from `COMMON_ENV`, which the Entur common chart sets to the environment
+name. That profile pulls in `gcp` via `spring.profiles.group`, so running in dev loads
+`application.properties`, then `application-gcp.properties`, then `application-dev.properties`. Only
+dev exists for now; adding an environment means a new `application-{env}.properties` and a matching
+group line.
+
+Secrets are never version controlled.
+
 ## Running locally
 
-There is no `application.properties` in the repository. Configuration is supplied externally, so
-nothing environment-specific is version controlled. Point the application at your own copy with a VM
-argument:
+Point the application at your own properties file with a VM argument:
 
 ```
 -Dspring.config.location=/path/to/your/application.properties
 ```
+
+That replaces the configuration above, so this one file is the whole of it: nothing from dev applies
+to a local run, and there is only one place to look.
 
 You will need a Postgres database, the Pub/Sub emulator (below), and a bearer token
 (see [Authenticating locally](#authenticating-locally)).
@@ -61,9 +80,8 @@ spring.datasource.url=jdbc:postgresql://localhost:5432/anzu
 spring.datasource.username=<your-db-user>
 spring.datasource.password=<your-db-password>
 
-# Make sure the project-id in your dev environment matches the project id
-# that your local antu is publishing validation status messages to, otherwise
-# anzu will not be able to pick up messages from antu.
+# Make sure the project-id matches the project that your local antu is publishing validation
+# status messages to, otherwise anzu will not be able to pick up messages from antu.
 spring.cloud.gcp.project-id=test
 spring.cloud.gcp.pubsub.emulator-host=localhost:8085
 anzu.pubsub.enabled=true
