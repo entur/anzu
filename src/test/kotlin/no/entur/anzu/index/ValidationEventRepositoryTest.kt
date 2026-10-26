@@ -8,11 +8,13 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.Import
 import org.springframework.jdbc.core.simple.JdbcClient
+import org.springframework.test.context.ActiveProfiles
 import java.time.Instant
 
 /** Round-trip and the unique key. The folding rules are covered by [ValidationRunsTest]. */
 @SpringBootTest
 @Import(PostgresTestBase::class)
+@ActiveProfiles("test")
 class ValidationEventRepositoryTest {
 
     @Autowired private lateinit var repository: ValidationEventRepository

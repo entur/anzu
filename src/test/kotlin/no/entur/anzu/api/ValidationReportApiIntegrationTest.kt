@@ -34,6 +34,7 @@ import org.springframework.context.annotation.Import
 import org.springframework.jdbc.core.simple.JdbcClient
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.TestingAuthenticationToken
+import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import java.net.URI
 import java.net.http.HttpClient
@@ -50,6 +51,7 @@ import java.time.Instant
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Import(PostgresTestBase::class)
+@ActiveProfiles("test")
 class ValidationReportApiIntegrationTest {
 
     @LocalServerPort private var port: Int = 0
