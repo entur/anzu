@@ -64,7 +64,7 @@ class ValidationStatusListener(
                     attributes[PubSubAttributes.VALIDATION_REPORT_ID],
                     attributes[PubSubAttributes.CORRELATION_ID],
                 )
-                val disposition = store(result.message, PubSubAttributes.deliveryAttempt(attributes))
+                val disposition = store(result.message)
                 logger.info(
                     "Done storing validation status message in database. Stage {}, report id '{}', correlation id '{}'",
                     attributes[PubSubAttributes.VALIDATION_STAGE],
@@ -75,7 +75,7 @@ class ValidationStatusListener(
             }
         }
 
-    private fun store(message: StatusMessage, deliveryAttempt: Int): Disposition =
+    private fun store(message: StatusMessage): Disposition =
         try {
             repository.append(message.toEvent())
             Disposition.ACK
@@ -89,28 +89,22 @@ class ValidationStatusListener(
             )
             Disposition.ACK
         } catch (e: CannotGetJdbcConnectionException) {
-            retryable(message, deliveryAttempt, e)
+            retryable(message, e)
         } catch (e: ConcurrencyFailureException) {
             // Lock timeouts, deadlock victims, optimistic failures.
-            retryable(message, deliveryAttempt, e)
+            retryable(message, e)
         } catch (e: TransientDataAccessException) {
-            retryable(message, deliveryAttempt, e)
+            retryable(message, e)
         } catch (e: RuntimeException) {
-            // Unclassified. Default to retryable: the dead letter topic is the backstop, and an
-            // endlessly redelivered message is a louder failure than a silently dropped one.
-            retryable(message, deliveryAttempt, e)
+            // Unclassified, most likely transient, so retried rather than dropped. With no dead
+            // letter topic, a deterministic failure here is redelivered until retention expires.
+            retryable(message, e)
         }
 
-    /** The delivery attempt is logged so a message heading for the dead letter topic is visible. */
-    private fun retryable(
-        message: StatusMessage,
-        deliveryAttempt: Int,
-        e: RuntimeException,
-    ): Disposition {
+    private fun retryable(message: StatusMessage, e: RuntimeException): Disposition {
         logger.warn(
-            "Could not store the run for report id '{}' (delivery attempt {}). Nacking for redelivery.",
+            "Could not store the run for report id '{}'. Nacking for redelivery.",
             message.validationReportId,
-            deliveryAttempt,
             e,
         )
         return Disposition.NACK

@@ -4,7 +4,6 @@ import no.entur.anzu.index.ValidationEventRepository
 import no.entur.anzu.ingest.PubSubAttributes.CORRELATION_ID
 import no.entur.anzu.ingest.PubSubAttributes.DATASET_CODESPACE
 import no.entur.anzu.ingest.PubSubAttributes.DATASET_REFERENTIAL
-import no.entur.anzu.ingest.PubSubAttributes.DELIVERY_ATTEMPT
 import no.entur.anzu.ingest.PubSubAttributes.VALIDATION_REPORT_ID
 import no.entur.anzu.ingest.PubSubAttributes.VALIDATION_STAGE
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -97,14 +96,5 @@ class ValidationStatusListenerTest {
         whenever(repository.append(any())).doThrow(IllegalStateException("something new"))
 
         assertEquals(Disposition.NACK, listener.handle("ok", attributes(), publishedAt))
-    }
-
-    @Test
-    fun `the delivery attempt is read, and is zero when absent`() {
-        // Pub/Sub sets this only on subscriptions with a dead letter policy. It goes in the nack
-        // log line so a message heading for the dead letter topic is visible before it arrives.
-        assertEquals(7, PubSubAttributes.deliveryAttempt(attributes() + (DELIVERY_ATTEMPT to "7")))
-        assertEquals(0, PubSubAttributes.deliveryAttempt(attributes()))
-        assertEquals(0, PubSubAttributes.deliveryAttempt(attributes() + (DELIVERY_ATTEMPT to "?")))
     }
 }
