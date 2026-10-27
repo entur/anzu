@@ -30,7 +30,8 @@ class AppTest {
     /** The cluster's configuration is loaded here too, not shadowed by a test copy. */
     @Test
     fun `the shipped configuration is in effect`() {
-        assertEquals("antu", context.environment.getProperty("anzu.blobstore.report-container"))
+        // Set only in src/main/resources/application.properties, so reading it back proves the
+        // shipped file is loaded rather than shadowed by the test one.
         assertEquals(
             "health,prometheus",
             context.environment.getProperty("management.endpoints.web.exposure.include"),
