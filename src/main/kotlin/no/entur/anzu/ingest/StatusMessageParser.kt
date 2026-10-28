@@ -49,6 +49,9 @@ class StatusMessageParser {
         /** The stages anzu serves. Any other value is acked and logged. */
         private val STAGES = mapOf(
             "EnturValidationStagePreValidation" to Stage.PREVALIDATION,
+            // the nightly prevalidations are keyed differently from ordinary prevalidation runs
+            // by marduk, but anzu should treat them as ordinary prevalidations
+            "EnturValidationStageNightlyValidation" to Stage.PREVALIDATION,
             "EnturValidationStageExportNetexPostValidation" to Stage.POSTVALIDATION,
             "EnturValidationStageExportNetexBlocksPostValidation" to Stage.BLOCKS_POSTVALIDATION,
             "EnturValidationStageFlexPostValidation" to Stage.FLEX_POSTVALIDATION,
