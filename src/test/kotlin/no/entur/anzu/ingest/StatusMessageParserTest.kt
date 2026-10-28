@@ -70,6 +70,7 @@ class StatusMessageParserTest {
     fun `every stage constant maps to its external stage`() {
         val expected = mapOf(
             "EnturValidationStagePreValidation" to Stage.PREVALIDATION,
+            "EnturValidationStageNightlyValidation" to Stage.PREVALIDATION,
             "EnturValidationStageExportNetexPostValidation" to Stage.POSTVALIDATION,
             "EnturValidationStageExportNetexBlocksPostValidation" to Stage.BLOCKS_POSTVALIDATION,
             "EnturValidationStageFlexPostValidation" to Stage.FLEX_POSTVALIDATION,
