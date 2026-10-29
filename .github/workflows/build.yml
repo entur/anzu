@@ -26,7 +26,7 @@ jobs:
       - uses: actions/setup-java@v6
         with:
           java-version: '25'
-          distribution: liberica
+          distribution: temurin
           cache: maven
 
       # Testcontainers needs a Docker daemon; ubuntu-24.04 ships one, so no setup step.
