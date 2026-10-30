@@ -22,7 +22,7 @@
 
     <properties>
         <java.version>25</java.version>
-        <kotlin.version>2.3.0</kotlin.version>
+        <kotlin.version>2.4.21</kotlin.version>
         <kotlin.compiler.jvmTarget>25</kotlin.compiler.jvmTarget>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <spring-cloud-gcp.version>8.2.1</spring-cloud-gcp.version>
