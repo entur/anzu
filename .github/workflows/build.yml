@@ -14,6 +14,13 @@ jobs:
     name: Lint
     uses: entur/gha-docker/.github/workflows/lint.yml@dcdc76ce2d251de20f35a92c566d8fe99036e03e # v1.13.0
 
+  openapi-lint:
+    name: OpenAPI Lint
+    uses: entur/gha-api/.github/workflows/lint.yml@v6
+    with:
+      path: src/main/resources/openapi/validation-reports.yaml
+      upload_to_bucket: false
+
   maven-build:
     name: Build
     runs-on: ubuntu-24.04
