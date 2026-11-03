@@ -17,7 +17,7 @@ class ProblemDetailsHandlerTest {
             handler.notFound(NotFoundException("Correlation id not found")),
             handler.forbidden(ForbiddenException("Insufficient privileges for correlation id c-1")),
             handler.gone(GoneException("No report available")),
-            handler.badGateway(ReportUnavailableException("boom")),
+            handler.serviceUnavailable(ReportUnavailableException("boom")),
             handler.inconsistentIndex(InconsistentIndexException("boom")),
             handler.unanticipated(IllegalStateException("boom")),
         )
@@ -39,10 +39,10 @@ class ProblemDetailsHandlerTest {
     }
 
     @Test
-    fun `a 502 never repeats the cause to the caller`() {
-        val body = handler.badGateway(ReportUnavailableException("bucket anzu-prod denied")).body!!
+    fun `a 503 never repeats the cause to the caller`() {
+        val body = handler.serviceUnavailable(ReportUnavailableException("bucket anzu-prod denied")).body!!
 
-        assertEquals(HttpStatus.BAD_GATEWAY.value(), body.status)
+        assertEquals(HttpStatus.SERVICE_UNAVAILABLE.value(), body.status)
         assertFalse(body.detail!!.contains("anzu-prod"))
     }
 

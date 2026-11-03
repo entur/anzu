@@ -44,10 +44,6 @@ paths:
         Requires the `editRouteData` responsibility for the codespace the import was delivered to.
         The codespace is resolved from the correlation id, so it cannot be chosen by the caller.
       tags: [ validation-reports ]
-      x-entur-permissions:
-        description: >-
-          The caller must be able to edit route data for the codespace the import was delivered
-          to. The codespace is resolved from the correlation id, never supplied by the caller.
       parameters:
         - $ref: '#/components/parameters/CorrelationId'
         - $ref: '#/components/parameters/ClientName'
@@ -63,7 +59,7 @@ paths:
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
         '500': { $ref: '#/components/responses/InternalServerError' }
-        '502': { $ref: '#/components/responses/BadGateway' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
 
   /validation-reports/{correlationId}/{stage}:
     get:
@@ -74,10 +70,6 @@ paths:
         Authorization is applied before the stage is resolved, so an unauthorized caller receives
         403 for every stage segment regardless of which stages actually ran.
       tags: [ validation-reports ]
-      x-entur-permissions:
-        description: >-
-          The caller must be able to edit route data for the codespace the import was delivered
-          to. Authorization is applied before the stage is resolved.
       parameters:
         - $ref: '#/components/parameters/CorrelationId'
         - name: stage
@@ -107,7 +99,7 @@ paths:
         '404': { $ref: '#/components/responses/NotFound' }
         '410': { $ref: '#/components/responses/Gone' }
         '500': { $ref: '#/components/responses/InternalServerError' }
-        '502': { $ref: '#/components/responses/BadGateway' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
 
 components:
   securitySchemes:
@@ -165,8 +157,8 @@ components:
       content:
         application/problem+json:
           schema: { $ref: '#/components/schemas/ProblemDetail' }
-    BadGateway:
-      description: A report could not be read.
+    ServiceUnavailable:
+      description: A report could not be read. The read may succeed on a retry.
       content:
         application/problem+json:
           schema: { $ref: '#/components/schemas/ProblemDetail' }

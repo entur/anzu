@@ -190,11 +190,11 @@ class ValidationReportServiceTest {
     }
 
     @Test
-    fun `a read failure is 502, and not 410`() {
+    fun `a read failure is 503, and not 410`() {
         val pre = run(Stage.PREVALIDATION, RunStatus.OK, t0.plusSeconds(60))
         whenever(repository.findRuns("c-1")).thenReturn(listOf(pre))
         grantAccess()
-        whenever(blobs.read(pre)).thenReturn(BlobResult.Failed(RuntimeException("503")))
+        whenever(blobs.read(pre)).thenReturn(BlobResult.Failed(RuntimeException("boom")))
 
         assertThrows<ReportUnavailableException> { service.reportFor("c-1", "prevalidation") }
     }

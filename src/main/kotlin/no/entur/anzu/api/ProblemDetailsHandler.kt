@@ -38,9 +38,9 @@ class ProblemDetailsHandler {
     fun gone(e: GoneException) = problem(HttpStatus.GONE, e.message)
 
     @ExceptionHandler(ReportUnavailableException::class)
-    fun badGateway(e: ReportUnavailableException): ResponseEntity<ProblemDetailBody> {
+    fun serviceUnavailable(e: ReportUnavailableException): ResponseEntity<ProblemDetailBody> {
         logger.error("A validation report could not be read", e)
-        return problem(HttpStatus.BAD_GATEWAY, "A validation report could not be read.")
+        return problem(HttpStatus.SERVICE_UNAVAILABLE, "A validation report could not be read.")
     }
 
     @ExceptionHandler(InconsistentIndexException::class)

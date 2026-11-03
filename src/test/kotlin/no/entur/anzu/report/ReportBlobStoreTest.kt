@@ -54,7 +54,7 @@ class ReportBlobStoreTest {
     @Test
     fun `a storage failure is Failed, and must not collapse into Absent`() {
         // Reporting a transient fault as 410 would tell a partner their report is permanently gone
-        // while it sits in the bucket. That case is 502.
+        // while it sits in the bucket. That case is 503.
         val failing: BlobStoreRepository = mock()
         whenever(failing.getBlob(any())).doThrow(BlobStoreException("backend error"))
 
