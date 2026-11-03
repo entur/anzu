@@ -195,12 +195,12 @@ class ValidationReportApiIntegrationTest {
     }
 
     @Test
-    fun `a read failure is 502, not 410`() {
+    fun `a read failure is 503, not 410`() {
         insert("tst_1", Stage.PREVALIDATION, RunStatus.OK, "tst", t0.plusSeconds(60))
-        whenever(blobs.read(any())).thenReturn(BlobResult.Failed(RuntimeException("503")))
+        whenever(blobs.read(any())).thenReturn(BlobResult.Failed(RuntimeException("boom")))
 
-        assertEquals(502, get("/validation-reports/c-1/prevalidation").statusCode())
-        assertEquals(502, get("/validation-reports/c-1").statusCode())
+        assertEquals(503, get("/validation-reports/c-1/prevalidation").statusCode())
+        assertEquals(503, get("/validation-reports/c-1").statusCode())
     }
 
     @Test
