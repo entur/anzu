@@ -19,7 +19,6 @@ info:
     audience: partner
   x-stability-level: draft
   x-deprecated: false
-  x-sunset: ""
 
 servers:
   - url: https://api.dev.entur.io/timetable/v1
@@ -44,12 +43,11 @@ paths:
       description: |
         Requires the `editRouteData` responsibility for the codespace the import was delivered to.
         The codespace is resolved from the correlation id, so it cannot be chosen by the caller.
-      tags: [validation-reports]
+      tags: [ validation-reports ]
       x-entur-permissions:
         description: >-
           The caller must be able to edit route data for the codespace the import was delivered
           to. The codespace is resolved from the correlation id, never supplied by the caller.
-        value: editRouteData
       parameters:
         - $ref: '#/components/parameters/CorrelationId'
         - $ref: '#/components/parameters/ClientName'
@@ -75,12 +73,11 @@ paths:
         Requires the `editRouteData` responsibility for the codespace the import was delivered to.
         Authorization is applied before the stage is resolved, so an unauthorized caller receives
         403 for every stage segment regardless of which stages actually ran.
-      tags: [validation-reports]
+      tags: [ validation-reports ]
       x-entur-permissions:
         description: >-
           The caller must be able to edit route data for the codespace the import was delivered
           to. Authorization is applied before the stage is resolved.
-        value: editRouteData
       parameters:
         - $ref: '#/components/parameters/CorrelationId'
         - name: stage
@@ -177,7 +174,7 @@ components:
   schemas:
     ValidationReports:
       type: object
-      required: [correlationId, codespace, validationRuns]
+      required: [ correlationId, codespace, validationRuns ]
       properties:
         correlationId:
           type: string
@@ -195,7 +192,7 @@ components:
 
     ValidationRun:
       type: object
-      required: [stage, status]
+      required: [ stage, status ]
       properties:
         stage: { $ref: '#/components/schemas/Stage' }
         status: { $ref: '#/components/schemas/Status' }
@@ -222,7 +219,7 @@ components:
     ValidationRunDetail:
       type: object
       description: One run. Carries the codespace, which the collection element does not.
-      required: [correlationId, codespace, stage, status]
+      required: [ correlationId, codespace, stage, status ]
       properties:
         correlationId:
           type: string
@@ -249,23 +246,19 @@ components:
       type: string
       description: |
         The validation step. Deliberately not a closed enum: the external vocabulary is curated so
-        it can grow without breaking generated clients.
+        it can grow without breaking generated clients. Today it is `PREVALIDATION`,
+        `POSTVALIDATION`, `BLOCKS_POSTVALIDATION`, `FLEX_POSTVALIDATION` and
+        `MERGED_POSTVALIDATION`.
       example: PREVALIDATION
-      examples:
-        - PREVALIDATION
-        - POSTVALIDATION
-        - BLOCKS_POSTVALIDATION
-        - FLEX_POSTVALIDATION
-        - MERGED_POSTVALIDATION
 
     Status:
       type: string
       description: A fixed set, controlled by Entur.
-      enum: [IN_PROGRESS, OK, FAILED]
+      enum: [ IN_PROGRESS, OK, FAILED ]
 
     ValidationEntry:
       type: object
-      required: [code, severity, message]
+      required: [ code, severity, message ]
       properties:
         code:
           type: string
@@ -277,7 +270,7 @@ components:
             On the entry, not the rule — a rule's severity may change over time.
             UNKNOWN means the producing validator reported a severity this API does not
             recognise; the entry is still complete in every other respect.
-          enum: [CRITICAL, ERROR, WARNING, INFO, UNKNOWN]
+          enum: [ CRITICAL, ERROR, WARNING, INFO, UNKNOWN ]
         message:
           type: string
           example: Invalid id structure on element ServiceJourney
@@ -303,7 +296,7 @@ components:
     ProblemDetail:
       type: object
       description: RFC 9457.
-      required: [title, status]
+      required: [ title, status ]
       properties:
         title: { type: string, example: Not Found }
         status: { type: integer, format: int32, example: 404 }
