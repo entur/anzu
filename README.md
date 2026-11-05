@@ -1,6 +1,6 @@
 # anzu
 
-> **Work in progress.** Not deployed to any environment. The API contract is at stability level
+> **Work in progress.** The API contract is at stability level
 > `draft` and may still change. Infrastructure, Helm charts and the build/deploy pipeline live in a
 > separate repository.
 
