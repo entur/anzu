@@ -12,7 +12,7 @@ concurrency:
 jobs:
   lint:
     name: Lint
-    uses: entur/gha-docker/.github/workflows/lint.yml@a1d476b895a271d0fe8557f1b763529b64fb0554 # v1.14.0
+    uses: entur/gha-docker/.github/workflows/lint.yml@v1
 
   openapi-lint:
     name: OpenAPI Lint
@@ -101,7 +101,7 @@ jobs:
 
   scan:
     needs: [docker-build]
-    uses: entur/gha-security/.github/workflows/docker-scan.yml@0962fb4f3f9004eeaea88582db8639e140ec6fda # v2.17.1
+    uses: entur/gha-security/.github/workflows/docker-scan.yml@v2
     secrets: inherit
     with:
       image_artifact: ${{ needs.docker-build.outputs.image_artifact }}
