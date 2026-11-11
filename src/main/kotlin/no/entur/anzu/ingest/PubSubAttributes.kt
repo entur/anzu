@@ -1,6 +1,6 @@
 package no.entur.anzu.ingest
 
-/** Attribute keys on the validation status queue. */
+/** Attribute keys on the validation status queue */
 object PubSubAttributes {
     const val CORRELATION_ID = "EnturValidationCorrelationId"
     const val DATASET_CODESPACE = "EnturDatasetCodespace"
