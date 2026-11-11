@@ -7,7 +7,4 @@ object PubSubAttributes {
     const val DATASET_REFERENTIAL = "EnturDatasetReferential"
     const val VALIDATION_REPORT_ID = "EnturValidationReportId"
     const val VALIDATION_STAGE = "EnturValidationStage"
-
-    /** Not read here; the subscription filters on it. */
-    const val VALIDATION_CLIENT = "EnturValidationClient"
 }
