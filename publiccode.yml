@@ -1,0 +1,63 @@
+# publiccode.yml metadata, see https://yml.publiccode.tools/
+publiccodeYmlVersion: "0.7.0"
+
+name: Anzu
+url: https://github.com/entur/anzu
+
+platforms:
+  - web
+  - linux
+
+categories:
+  - data-collection
+  - data-analytics
+
+developmentStatus: development
+softwareType: standalone/backend
+
+organisation:
+  name: Entur AS
+  uri: https://entur.no
+
+intendedAudience:
+  scope:
+    - transportation
+  countries:
+    - "NO"
+
+description:
+  en:
+    localisedName: Anzu
+    shortDescription: Serves validation reports for NeTEx data delivered to Entur.
+    longDescription: >
+      Anzu gives organisations that deliver NeTEx timetable data to Entur access to the validation reports produced
+      when their data is imported. An import runs through several validation stages, each producing its own report,
+      so reports are addressed by the import rather than by a single run. Anzu subscribes to the validation status
+      queue and records each event as it arrives, folding runs from their events on read, so that arrival order
+      never matters and a redelivered event cannot corrupt a run. Report bodies are not stored, only the fact that a
+      run happened and where its report lives. Callers are authorised against the codespace the import belongs to.
+    documentation: https://github.com/entur/anzu/blob/main/README.md
+    features:
+      - Validation reports addressed by import, across all stages
+      - Event-sourced ingest that tolerates redelivery and out-of-order arrival
+      - Codespace-based authorisation, resolved from the import rather than supplied by the caller
+      - Hand-written OpenAPI contract
+
+legal:
+  license: EUPL-1.2
+  mainCopyrightOwner: Entur AS
+
+maintenance:
+  type: internal
+  contacts:
+    - name: Entur ROR (Open Data and Journey Planning)
+      email: kollektivdata@entur.org
+
+localisation:
+  localisationReady: false
+  availableLanguages:
+    - en
+
+dependsOn:
+  open:
+    - name: PostgreSQL
