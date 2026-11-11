@@ -20,6 +20,10 @@ jobs:
 
   openapi-lint:
     name: OpenAPI Lint
+    permissions:
+      contents: read
+      actions: read
+      id-token: write
     uses: entur/gha-api/.github/workflows/lint.yml@v6
     with:
       path: src/main/resources/openapi/validation-reports.yaml
