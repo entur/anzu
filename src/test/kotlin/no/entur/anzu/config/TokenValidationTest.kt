@@ -52,9 +52,10 @@ class TokenValidationTest {
         assertEquals(401, get(token(key = unpublishedKey)).statusCode())
     }
 
+    /** An hour, not a minute: the default validator allows 60 seconds of clock skew. */
     @Test
     fun `an expired token is refused`() {
-        assertEquals(401, get(token(expiry = Instant.now().minusSeconds(60))).statusCode())
+        assertEquals(401, get(token(expiry = Instant.now().minusSeconds(3600))).statusCode())
     }
 
     @Test

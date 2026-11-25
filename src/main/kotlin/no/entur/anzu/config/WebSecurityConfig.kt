@@ -84,7 +84,7 @@ class WebSecurityConfig {
 
     /** The description stays out of the response: every refusal looks alike from the outside. */
     private fun refusal(cause: RuntimeException): InvalidBearerTokenException {
-        logger.debug("Refusing a bearer token anzu cannot authenticate", cause)
+        logger.warn("Refusing a bearer token anzu cannot authenticate", cause)
         return InvalidBearerTokenException("The token could not be authenticated")
     }
 
