@@ -66,6 +66,9 @@ class WebSecurityConfig {
      * [NullPointerException] for a token with no `iss` claim. Neither is an
      * `AuthenticationException`, so both escape the filter chain and are logged at ERROR with a
      * stack trace by the container.
+     *
+     * A failed OpenID discovery for a trusted issuer is translated here too. That fails closed: no
+     * token is ever accepted without full validation, so it costs availability, not security.
      */
     private fun refusing(
         delegate: MultiIssuerAuthenticationManagerResolver,

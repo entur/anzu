@@ -12,7 +12,6 @@ import com.sun.net.httpserver.HttpServer
 import no.entur.anzu.PostgresTestBase
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Test
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.server.LocalServerPort
@@ -43,8 +42,9 @@ class TokenValidationTest {
 
     @Test
     fun `a sound token is authenticated`() {
-        // Not 401 is the whole claim; what the endpoint answers after that is another test's business.
-        assertNotEquals(401, get(token()).statusCode())
+        // 404 is the empty index answering: authentication passed, then there was no such import.
+        // Asserting that rather than "not 401" keeps a 500 from passing for a success.
+        assertEquals(404, get(token()).statusCode())
     }
 
     @Test
